@@ -9,6 +9,7 @@ steps:
       './backend'
     ]
 
+
   # 2. Artifact Registryへのプッシュ
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app']
