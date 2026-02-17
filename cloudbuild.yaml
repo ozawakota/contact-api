@@ -1,0 +1,28 @@
+steps:
+  # 1. Dockerイメージのビルド
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app', './backend']
+
+  # 2. Artifact Registryへのプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app']
+
+  # 3. Cloud Runへのデプロイ
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'fastapi-service'
+      - '--image'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app'
+      - '--region'
+      - 'asia-northeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app'
+
+timeout: '600s'
