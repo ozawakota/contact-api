@@ -22,6 +22,9 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 images:
   - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app'
 
