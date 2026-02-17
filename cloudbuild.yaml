@@ -1,7 +1,13 @@
 steps:
   # 1. Dockerイメージのビルド
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app', './backend']
+    args: [
+      'build',
+      '-t',
+      'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app',
+      '-f', 'backend/Dockerfile',
+      './backend'
+    ]
 
   # 2. Artifact Registryへのプッシュ
   - name: 'gcr.io/cloud-builders/docker'
