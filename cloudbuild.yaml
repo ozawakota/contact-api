@@ -1,19 +1,19 @@
 steps:
   # 1. Dockerイメージのビルド
-  # 基準（コンテキスト）を ./backend にすることで、app/ 内のファイルにアクセスします
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
       '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app',
-      '-f', 'backend/app/Dockerfile', 
+      # Dockerfileの「本当の場所」を指定
+      '-f', 'backend/db-backup/docker/Dockerfile', 
+      # 基準(コンテキスト)を ./backend にして、appフォルダなどを見えるようにする
       './backend'                     
     ]
 
-  # 2. Artifact Registryへのプッシュ
+  # 2. プッシュ / 3. デプロイ はそのまま（前回の内容と同じ）
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app']
 
-  # 3. Cloud Runへのデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -30,8 +30,3 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
-images:
-  - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app'
-
-timeout: '600s'
