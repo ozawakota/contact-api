@@ -4,4 +4,4 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"Hello v2": "GCP CI/CD!"}
+    return {"Hello v3": "GCP CI/CD!"}
