@@ -69,33 +69,32 @@ LLMがどのカテゴリに何件振り分けたかをグラフで表示。
 ```
 
 ## お問い合わせAPI : 仕様
+* エンドポイント一覧
 
-	1. エンドポイント一覧
+	| メソッド | パス | 説明 | 備考 |
+	| --- | --- | --- | --- |
+	| POST | /api/v1/contacts | お問い合わせの新規受付 | バリデーション後、BackgroundTasksを起動。|
+	| GET | /api/v1/admin/contacts | 履歴一覧の取得 | ページネーション、カテゴリ/ステータス検索。|
+	| GET | /api/v1/admin/contacts/{id} | 特定の履歴詳細を取得 | LLMの解析ログや判定理由も含む。|
+	| PATCH | /api/v1/admin/contacts/{id} | 対応ステータス・カテゴリの更新 | 人間によるLLM判定の修正（プラスアルファ要件）。|
+	| GET | /api/v1/admin/analytics | 振り分け統計データの取得 | Reactダッシュボード用。|
 
-		| メソッド | パス | 説明 | 備考 |
-		| --- | --- | --- | --- |
-		| POST | /api/v1/contacts | お問い合わせの新規受付 | バリデーション後、BackgroundTasksを起動。|
-		| GET | /api/v1/admin/contacts | 履歴一覧の取得 | ページネーション、カテゴリ/ステータス検索。|
-		| GET | /api/v1/admin/contacts/{id} | 特定の履歴詳細を取得 | LLMの解析ログや判定理由も含む。|
-		| PATCH | /api/v1/admin/contacts/{id} | 対応ステータス・カテゴリの更新 | 人間によるLLM判定の修正（プラスアルファ要件）。|
-		| GET | /api/v1/admin/analytics | 振り分け統計データの取得 | Reactダッシュボード用。|
+*  お問い合わせデータモデル
 
-	2. お問い合わせデータモデル
-
-		| カラム名 | データ型 | 制約 | 説明 |
-		| ---| ---| ---| ---|
-		| id | Integer | Primary Key, Serial | ユニークな管理ID |
-		| name | String(50) | Not Null | ユーザーの氏名 |
-		| email | String(255) | Not Null, Index | ユーザーのメールアドレス |
-		| subject | String(100) | Not Null | お問い合わせ件名 |
-		| message | Text | Not Null | お問い合わせ本文（サニタイズ後） |
-		| category | Enum | Default: 'other' | LLMが判定したカテゴリ（shipping, product, billing, other） |
-		| priority | Integer | Default: 1 | 緊急度（1:通常, 2:高, 3:至急） |
-		| status | Enum | Default: 'unread' | 対応状態（unread, in_progress, resolved） |
-		| sentiment | String(20) | Nullable | LLMによる感情分析結果（positive, neutral, negative） |
-		| llm_reasoning | Text | Nullable | LLMがそのカテゴリを選んだ理由（デバッグ・改善用） |
-		| created_at | DateTime | Default: Now() | お問い合わせ受信日時 |
-		| updated_at | DateTime | Default: Now() | 最終更新日時（ステータス変更時など） |
+	| カラム名 | データ型 | 制約 | 説明 |
+	| ---| ---| ---| ---|
+	| id | Integer | Primary Key, Serial | ユニークな管理ID |
+	| name | String(50) | Not Null | ユーザーの氏名 |
+	| email | String(255) | Not Null, Index | ユーザーのメールアドレス |
+	| subject | String(100) | Not Null | お問い合わせ件名 |
+	| message | Text | Not Null | お問い合わせ本文（サニタイズ後） |
+	| category | Enum | Default: 'other' | LLMが判定したカテゴリ（shipping, product, billing, other） |
+	| priority | Integer | Default: 1 | 緊急度（1:通常, 2:高, 3:至急） |
+	| status | Enum | Default: 'unread' | 対応状態（unread, in_progress, resolved） |
+	| sentiment | String(20) | Nullable | LLMによる感情分析結果（positive, neutral, negative） |
+	| llm_reasoning | Text | Nullable | LLMがそのカテゴリを選んだ理由（デバッグ・改善用） |
+	| created_at | DateTime | Default: Now() | お問い合わせ受信日時 |
+	| updated_at | DateTime | Default: Now() | 最終更新日時（ステータス変更時など） |
 
 ## 認証・認可
 
