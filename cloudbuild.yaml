@@ -1,54 +1,37 @@
-# Cloud Buildの設定ファイル（CI/CDの設計図）
 steps:
-  # ---------------------------------------------------------
-  # STEP 1: Dockerイメージの作成（ビルド）
-  # ---------------------------------------------------------
-  - name: 'gcr.io/cloud-builders/docker' # Googleが提供するDockerビルド用ツールを使用
-    args: [
-      'build',                           # Dockerイメージを構築せよという命令
-      '-t',                              # 「タグ（名前）」を付けるオプション
-      # [リージョン]-[形式].pkg.dev/[プロジェクトID]/[リポジトリ名]/[イメージ名] の形式
-      'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app',
-      '-f', 'backend/Dockerfile',        # Dockerfileがルートではなくbackendフォルダ内にあることを指定
-      './backend'                        # ビルドに必要なファイル（ソースコード）がある場所を指定
-    ]
-
-  # ---------------------------------------------------------
-  # STEP 2: 作成したイメージを倉庫（Artifact Registry）に保存
-  # ---------------------------------------------------------
+  # 1. Dockerイメージのビルド
+  # 基準（コンテキスト）を ./backend にすることで、app/ 内のファイルにアクセスします
   - name: 'gcr.io/cloud-builders/docker'
     args: [
-      'push',                            # 倉庫にアップロードせよという命令
-      'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app' # 保存先のパス
+      'build',
+      '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app',
+      '-f', 'backend/app/Dockerfile', 
+      './backend'                     
     ]
 
-  # ---------------------------------------------------------
-  # STEP 3: 倉庫にあるイメージをCloud Runにデプロイ
-  # ---------------------------------------------------------
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk' # gcloudコマンドを使えるツールを使用
-    entrypoint: gcloud                   # 実行するコマンドの起点
-    args:
-      - 'run'                            # Cloud Runを操作する命令
-      - 'deploy'                         # デプロイ（公開）せよという命令
-      - 'fastapi-service'                # ★Cloud Run上でのサービス名（ここで名前が決まります）
-      - '--image'                        # どのイメージを使うかの指定
-      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app'
-      - '--region'                       # デプロイ先の場所（東京）
-      - 'asia-northeast1'
-      - '--platform'                     # Cloud Runの動作モード（現在はmanagedが標準）
-      - 'managed'
-      - '--allow-unauthenticated'        # 公開設定：インターネットから誰でもアクセス可能にする設定
+  # 2. Artifact Registryへのプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app']
 
-# ---------------------------------------------------------
-# オプション設定
-# ---------------------------------------------------------
+  # 3. Cloud Runへのデプロイ
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'fastapi-service'
+      - '--image'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app'
+      - '--region'
+      - 'asia-northeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
 options:
-  # ログの出力先をCloud Loggingのみに制限（最近のGCPでの権限エラー回避に必須）
   logging: CLOUD_LOGGING_ONLY
 
-# 成功時にArtifact Registryに登録されたことを明示する設定
 images:
   - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app'
 
-# 全体の処理が10分（600秒）を超えたら強制終了させる（無駄な課金防止）
 timeout: '600s'
