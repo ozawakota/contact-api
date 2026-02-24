@@ -11,6 +11,46 @@ fastapi-service
 ## 管理画面
 https://console.cloud.google.com/cloud-build/builds?referrer=search&authuser=0&project=cobalt-howl-278500&supportedpurview=project
 
+## CI/CD パイプライン（cloudbuild.yaml）
+
+`cloudbuild.yaml` は **Google Cloud Build** を使った自動デプロイの設定ファイルです。
+コードをプッシュすると、以下の3ステップが自動で実行されます。
+
+```
+ステップ1: ビルド → ステップ2: プッシュ → ステップ3: デプロイ
+```
+
+### ステップ1: Docker イメージのビルド
+
+```
+Dockerfile の場所 : backend/db-backup/docker/Dockerfile
+ビルドコンテキスト: ./backend（appフォルダなどを参照できるようにするため）
+イメージ名        : asia-northeast1-docker.pkg.dev/{PROJECT_ID}/contact-api/fastapi-app
+```
+
+> `./backend` をコンテキストに指定することで、Dockerfile 内から `app/` などのフォルダを
+> 正しく参照できるようにしています。
+
+### ステップ2: Artifact Registry へのプッシュ
+
+ビルドしたイメージを **asia-northeast1（東京）** の Artifact Registry に登録します。
+
+### ステップ3: Cloud Run へのデプロイ
+
+| 項目 | 値 |
+|---|---|
+| サービス名 | `fastapi-service` |
+| リージョン | `asia-northeast1`（東京） |
+| プラットフォーム | マネージド（サーバーレス） |
+| 認証 | 不要（`--allow-unauthenticated`） |
+
+### ログ設定
+
+`CLOUD_LOGGING_ONLY` を指定しており、ビルドログは **Cloud Logging** にのみ出力されます
+（Cloud Storage へのログ保存は行いません）。
+
+---
+
 ## LLM学習
 
 > 基礎
