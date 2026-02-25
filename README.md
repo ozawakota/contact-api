@@ -333,6 +333,339 @@ contact_vectors (contact_id, embedding, embedding_model, chunk_text)
 - **感情分析精度**: 人間評価者による品質検証
 - **レイテンシ監視**: LLM応答時間の継続的監視
 
+## 📂 プロジェクト構成
+
+### ディレクトリ構造
+
+```
+contact-api/
+├── backend/                    # バックエンドAPI（Python FastAPI）
+│   ├── app/                    # アプリケーションコア
+│   │   ├── main.py            # FastAPI エントリーポイント  
+│   │   ├── contacts/          # コンタクト機能モジュール
+│   │   │   ├── schemas.py     # Pydantic データモデル
+│   │   │   ├── use_case.py    # ビジネスロジック制御
+│   │   │   ├── providers.py   # DI コンテナ
+│   │   │   └── _validators.py # 入力検証・セキュリティ
+│   │   └── models/            # データベースモデル
+│   │       └── contact.py     # SQLAlchemy モデル
+│   ├── config/                # 設定ファイル（環境別）
+│   ├── data/                  # 開発用データ・サンプル
+│   ├── migrations/            # データベースマイグレーション
+│   ├── tests/                 # テストコード
+│   ├── develop/               # 開発用スクリプト・ツール
+│   ├── var/                   # ログ・一時ファイル
+│   └── db-backup/docker/      # コンテナ化設定
+├── frontend/                  # フロントエンド（React + Next.js）
+│   ├── app/                   # Next.js App Router
+│   │   ├── layout.tsx         # 共通レイアウト
+│   │   ├── page.tsx           # ホームページ（お問い合わせフォーム）
+│   │   ├── admin/             # 管理画面
+│   │   │   ├── layout.tsx     # 管理画面レイアウト
+│   │   │   ├── page.tsx       # ダッシュボード
+│   │   │   ├── contacts/      # お問い合わせ管理
+│   │   │   └── analytics/     # 統計・分析画面
+│   │   └── api/               # API Routes（プロキシ・認証）
+│   ├── components/            # 再利用可能コンポーネント
+│   │   ├── ui/                # UI基本コンポーネント
+│   │   ├── forms/             # フォーム関連
+│   │   └── charts/            # データ可視化
+│   ├── lib/                   # ユーティリティ・設定
+│   ├── hooks/                 # カスタムReact Hooks
+│   ├── types/                 # TypeScript型定義
+│   └── public/                # 静的ファイル
+├── docs/                      # プロジェクトドキュメント
+├── terraform/                 # インフラコード（将来）
+└── cloudbuild.yaml           # CI/CDパイプライン
+```
+
+### 各ディレクトリの役割
+
+#### Backend
+- **config/**: 環境別設定ファイル（開発・本番・テスト）
+- **data/**: 開発用サンプルデータ・マスターデータ
+- **develop/**: 開発支援スクリプト・ユーティリティ
+- **migrations/**: Alembicマイグレーションファイル
+- **tests/**: pytest テストケース・フィクスチャ
+- **var/**: ログファイル・キャッシュ・一時ファイル
+
+#### Frontend
+- **app/**: Next.js 13+ App Routerベース
+- **components/**: 再利用可能なReactコンポーネント
+- **lib/**: API クライアント・ユーティリティ関数
+- **hooks/**: カスタムReact Hooks（データフェッチ・状態管理）
+- **types/**: TypeScript型定義（APIレスポンス・Props）
+
+---
+
+## 🎨 フロントエンド環境
+
+### 技術スタック
+
+| 技術 | バージョン | 役割 | 選定理由 |
+|------|------------|------|----------|
+| **Next.js** | 15.x | Reactフレームワーク | App Router・Server Components・TypeScript標準対応 |
+| **React** | 19.x | UIライブラリ | 最新機能・Server Components対応 |
+| **TypeScript** | 5.x | 型安全性 | 開発効率・品質向上・API連携の安全性 |
+| **Tailwind CSS** | 4.x | スタイリング | ユーティリティファースト・デザインシステム統一 |
+| **React Hook Form** | 7.x | フォーム管理 | バリデーション・パフォーマンス最適化 |
+| **Zod** | 3.x | スキーマバリデーション | クライアント・サーバー共通バリデーション |
+| **Recharts** | 2.x | データ可視化 | 統計グラフ・ダッシュボード |
+| **Firebase Auth** | 10.x | 認証・ユーザー管理 | Google認証・メール認証・セッション管理・セキュリティルール |
+
+### 主要機能
+
+#### 1. お問い合わせフォーム（パブリック）
+```typescript
+// app/page.tsx - メインのお問い合わせページ
+- リアルタイムバリデーション
+- プログレッシブエンハンスメント
+- アクセシビリティ対応（WCAG 2.1 AA）
+- スパム対策（reCAPTCHA v3）
+```
+
+#### 2. 管理ダッシュボード（認証必須）
+```typescript
+// app/admin/page.tsx - 管理画面メイン
+- お問い合わせ一覧・詳細表示
+- AIカテゴリ分類結果表示
+- 感情分析・優先度可視化
+- 対応状況管理（ステータス更新）
+- 統計・レポート機能
+```
+
+### レンダリング戦略
+
+| ページタイプ | 手法 | 理由 |
+|-------------|------|------|
+| **ホーム・お問い合わせフォーム** | SSG | SEO最適化・高速表示 |
+| **管理ダッシュボード** | SSR | リアルタイムデータ・認証必須 |
+| **統計・分析ページ** | ISR | データ更新頻度とパフォーマンスの最適バランス |
+| **API Routes** | Edge Runtime | 低レイテンシ・認証プロキシ |
+
+### 開発環境セットアップ
+
+```bash
+# フロントエンド環境構築
+cd frontend
+
+# 依存関係インストール
+npm install
+
+# 環境変数設定
+cp .env.example .env.local
+# NEXT_PUBLIC_API_URL=http://localhost:8000
+# Firebase Configuration
+# NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+# NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+# NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+# NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+# NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+# NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef
+
+# 開発サーバー起動
+npm run dev
+# → http://localhost:3000
+
+# 型チェック
+npm run type-check
+
+# リンター実行
+npm run lint
+
+# テスト実行  
+npm run test
+```
+
+### API連携設計
+
+```typescript
+// lib/api.ts - APIクライアント
+class ContactAPI {
+  async createContact(data: ContactRequest): Promise<ContactResponse> {
+    // バックエンドAPI連携
+  }
+  
+  async getContacts(params: ContactListParams): Promise<ContactListResponse> {
+    // 管理画面データフェッチ
+  }
+  
+  async updateContactStatus(id: number, status: ContactStatus): Promise<void> {
+    // ステータス更新
+  }
+}
+```
+
+### パフォーマンス最適化
+
+- **Code Splitting**: 管理画面は遅延ローディング
+- **Image Optimization**: Next.js Image Component使用
+- **Bundle Analysis**: webpack-bundle-analyzer導入
+- **Caching**: SWRによるクライアントサイドキャッシュ
+- **CDN**: Vercel Edge Networkによる配信最適化
+
+### セキュリティ対策
+
+- **CSP**: Content Security Policy設定
+- **CSRF**: Firebase標準CSRF保護
+- **XSS**: React自動エスケープ + DOMPurify
+- **認証**: Firebase Authentication + セキュリティルール
+- **API保護**: 管理API呼び出し時の認証チェック
+
+### Firebase認証システム
+
+#### 認証機能詳細
+
+| 認証方法 | 実装状況 | 用途 | セキュリティレベル |
+|---------|---------|------|------------------|
+| **Google OAuth** | ✅ 実装予定 | 管理者ログイン | 🔴 最高 |
+| **メール/パスワード** | ✅ 実装予定 | 管理者アカウント作成 | 🟡 高 |
+| **匿名認証** | 🔄 検討中 | 問い合わせ追跡 | 🟢 中 |
+| **管理者招待制** | ✅ 実装予定 | セキュリティ強化 | 🔴 最高 |
+
+#### 認証フロー設計
+
+```typescript
+// Firebase認証の実装パターン
+interface AuthFlow {
+  // 1. 管理者ログイン（Google OAuth推奨）
+  adminLogin: {
+    provider: 'google.com';
+    permissions: ['admin', 'read', 'write'];
+    mfa: true; // 多要素認証必須
+  };
+  
+  // 2. 一般ユーザー（問い合わせ追跡用）
+  publicUser: {
+    provider: 'anonymous';
+    permissions: ['read_own_contacts'];
+    sessionTimeout: '24h';
+  };
+}
+```
+
+#### セキュリティルール（Firestore）
+
+```javascript
+// firestore.rules - 管理画面データ保護
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 管理者のみアクセス可能
+    match /contacts/{contactId} {
+      allow read, write: if request.auth != null 
+        && request.auth.token.admin == true;
+    }
+    
+    // AI解析結果も管理者限定
+    match /contact_ai_analyses/{analysisId} {
+      allow read, write: if request.auth != null 
+        && request.auth.token.admin == true;
+    }
+  }
+}
+```
+
+#### 環境設定例
+
+```bash
+# .env.local - Firebase設定
+NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyC..."
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="contact-api-prod.firebaseapp.com"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="contact-api-prod"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="contact-api-prod.appspot.com"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="123456789"
+NEXT_PUBLIC_FIREBASE_APP_ID="1:123456789:web:abcdef123456"
+
+# 管理者権限設定用
+FIREBASE_ADMIN_SDK_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----..."
+FIREBASE_ADMIN_SDK_CLIENT_EMAIL="firebase-adminsdk-xxx@contact-api-prod.iam.gserviceaccount.com"
+```
+
+#### 実装コンポーネント例
+
+```typescript
+// components/auth/LoginForm.tsx
+export function LoginForm() {
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  };
+
+  return (
+    <div className="auth-container">
+      <button onClick={signInWithGoogle} className="google-signin-btn">
+        <FcGoogle className="mr-2" />
+        管理者としてログイン
+      </button>
+    </div>
+  );
+}
+
+// hooks/useAuth.ts - 認証状態管理
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        // カスタムクレーム確認（管理者判定）
+        const token = await user.getIdTokenResult();
+        setIsAdmin(token.claims.admin === true);
+      }
+    });
+    return unsubscribe;
+  }, []);
+  
+  return { user, isAdmin };
+}
+```
+
+#### 管理者権限付与（Cloud Functions）
+
+```typescript
+// functions/src/auth.ts - 管理者権限設定
+export const setAdminClaim = functions.https.onCall(async (data, context) => {
+  // 既存管理者のみが新規管理者を追加可能
+  if (!context.auth?.token.admin) {
+    throw new Error('管理者権限が必要です');
+  }
+  
+  await admin.auth().setCustomUserClaims(data.uid, {
+    admin: true,
+    role: 'admin',
+    permissions: ['read', 'write', 'admin']
+  });
+  
+  return { message: '管理者権限を付与しました' };
+});
+```
+
+#### 本番運用設計
+
+```yaml
+production_security:
+  authentication:
+    - provider: "Google OAuth 2.0"
+    - mfa: "必須（TOTPアプリ）"
+    - session_timeout: "8時間"
+    - password_policy: "不要（OAuth専用）"
+    
+  authorization:
+    - role_based: "admin/user分離"
+    - firestore_rules: "厳格なデータアクセス制御"
+    - api_protection: "Firebase IDトークン検証"
+    
+  monitoring:
+    - login_attempts: "Firebase標準監視"
+    - suspicious_activity: "アラート設定"
+    - access_logs: "Cloud Logging統合"
+```
+
+---
+
 ## 📚 ドキュメント構成
 
 本プロジェクトの詳細ドキュメントは`docs/`ディレクトリに整理されています：
