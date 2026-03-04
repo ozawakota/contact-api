@@ -1,7 +1,7 @@
 # Core FastAPI dependencies
 fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
-uvloop>=0.17.0
+# uvloop>=0.17.0  # 一旦無効化（Cloud Run起動問題調査中）
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
 

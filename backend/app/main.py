@@ -46,67 +46,46 @@ def initialize_firebase():
 # Application lifespan management
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """アプリケーションライフサイクル管理"""
+    """アプリケーションライフサイクル管理（Cloud Run最適化版）"""
     # Startup
     print("🚀 Starting Contact API application...")
     
+    # Cloud Run向け：最小限の初期化のみ
     try:
-        # Initialize Firebase (non-blocking)
-        initialize_firebase()
+        # Firebase初期化は遅延実行
+        print("⚠️ Firebase initialization deferred for faster startup")
         
-        # Setup dependency injection container
-        container = create_application_container()
-        app.state.container = container
+        # 依存関係コンテナは遅延作成
+        print("⚠️ Dependency container creation deferred for faster startup")
         
-        # Initialize database (with timeout protection)
-        try:
-            initialize_database(container)
-            print("✅ Database initialized successfully")
-        except Exception as e:
-            print(f"⚠️  Database initialization failed: {e}")
-            # アプリケーション起動は継続（後で再試行可能）
-        
-        print("✅ Application startup complete")
+        print("✅ Application startup complete (minimal initialization)")
         
     except Exception as e:
         print(f"❌ Startup error: {e}")
-        # 起動エラーでも継続（可能な範囲で）
     
     yield
     
     # Shutdown
     print("🛑 Shutting down Contact API application...")
-    try:
-        if hasattr(app.state, 'container'):
-            app.state.container.unwire()
-    except Exception as e:
-        print(f"⚠️  Shutdown error: {e}")
     print("✅ Application shutdown complete")
 
 
 # Create the main FastAPI application
 def create_main_app() -> FastAPI:
-    """メインアプリケーションの作成"""
+    """メインアプリケーションの作成（Cloud Run最適化版）"""
     
     # Get environment
     env = os.getenv("ENVIRONMENT", "development")
     
-    # Create container and wire dependencies
-    container = create_application_container()
+    print(f"🔧 Creating app for environment: {env}")
     
-    # Create FastAPI app with integrated services
-    main_app = create_app(
-        db_session=container.database_session_factory,
-        firebase_auth=None,  # Firebase auth will be configured separately
-        contact_usecase=container.contact_usecase(),
-        ai_analysis_usecase=container.ai_analysis_usecase(),
-        admin_dashboard_api=container.admin_dashboard_api(),
-        vector_search_usecase=container.vector_search_usecase(),
-        notification_service=container.notification_service(),
+    # Cloud Run向け：まず最小限のFastAPIアプリを作成
+    main_app = FastAPI(
+        title="Contact API",
+        description="Next-Generation Customer Support System",
+        version="1.0.0",
+        lifespan=lifespan
     )
-    
-    # Set lifespan
-    main_app.router.lifespan_context = lifespan
     
     # Add CORS middleware
     main_app.add_middleware(
@@ -117,28 +96,58 @@ def create_main_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    # Store container in app state
-    main_app.state.container = container
+    # Cloud Run向け：コンテナ設定はスキップ
+    # main_app.state.container = container  # 一時的に無効化
     
     # Add health check endpoint
     @main_app.get("/health")
     async def health_check():
         """ヘルスチェックエンドポイント"""
+        import os
         return {
             "status": "healthy",
             "environment": env,
             "service": "Contact API",
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "port": os.getenv("PORT"),
+            "process_id": os.getpid(),
+            "startup_mode": "minimal"
         }
     
     # Legacy endpoint for backward compatibility
     @main_app.get("/")
     async def read_root():
         """ルートエンドポイント（後方互換性のため）"""
+        import os
         return {
-            "message": "Contact API v1.0",
+            "message": "Contact API v1.0 (Cloud Run Optimized)",
             "environment": env,
-            "status": "running"
+            "status": "running",
+            "port": os.getenv("PORT"),
+            "startup_mode": "minimal",
+            "debug": True
+        }
+    
+    # Cloud Run診断エンドポイント
+    @main_app.get("/debug/startup")
+    async def debug_startup():
+        """起動診断エンドポイント"""
+        import os
+        import sys
+        return {
+            "python_version": sys.version,
+            "working_directory": os.getcwd(),
+            "environment_variables": {
+                "PORT": os.getenv("PORT"),
+                "ENVIRONMENT": os.getenv("ENVIRONMENT"),
+                "PYTHONPATH": os.getenv("PYTHONPATH"),
+                "PYTHONUNBUFFERED": os.getenv("PYTHONUNBUFFERED")
+            },
+            "process_info": {
+                "pid": os.getpid(),
+                "executable": sys.executable
+            },
+            "startup_mode": "minimal_cloud_run"
         }
     
     return main_app

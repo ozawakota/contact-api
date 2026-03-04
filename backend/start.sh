@@ -20,12 +20,18 @@ echo "🔧 Pre-startup validation..."
 
 # Uvicornサーバー起動（Cloud Run最適化設定）
 echo "🌐 Starting Uvicorn server on port $PORT..."
+
+# デバッグ情報出力
+echo "📋 Working directory: $(pwd)"
+echo "📋 Python path: $PYTHONPATH"
+echo "📋 Available files:"
+ls -la app/
+
+# より安定した起動設定（uvloopなし）
 exec uvicorn app.main:app \
     --host 0.0.0.0 \
     --port $PORT \
     --workers 1 \
-    --timeout-keep-alive 30 \
-    --timeout-graceful-shutdown 30 \
-    --log-level info \
-    --access-log \
-    --loop uvloop
+    --timeout-keep-alive 60 \
+    --log-level debug \
+    --access-log

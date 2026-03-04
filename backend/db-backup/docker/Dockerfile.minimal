@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+# 最小限の依存関係のみインストール
+RUN pip install fastapi uvicorn
+
+WORKDIR /app
+
+# 最小限のファイルのみコピー
+COPY minimal_main.py .
+COPY minimal_start.sh .
+
+# 実行権限設定
+RUN chmod +x minimal_start.sh
+
+# 環境変数設定
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# 最小限起動
+CMD ["./minimal_start.sh"]
