@@ -739,6 +739,114 @@ docker-compose up -d
 curl http://localhost:8000/health
 ```
 
+### 🚀 システム起動方法
+
+#### **方法1: Docker Compose（推奨）**
+```bash
+# バックエンド起動
+cd backend
+docker-compose up -d
+
+# フロントエンド起動
+cd ../frontend  
+npm install
+npm run dev
+
+# 確認
+# バックエンド: http://localhost:8000
+# フロントエンド: http://localhost:3000
+```
+
+#### **方法2: ローカル実行**
+```bash
+# バックエンド
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# フロントエンド（別ターミナル）
+cd frontend
+npm install
+npm run dev
+```
+
+#### **方法3: 本番環境（Cloud Run）**
+```bash
+# Cloud Buildデプロイ
+gcloud builds submit --config cloudbuild.yaml
+
+# または手動デプロイ
+cd backend
+docker build -t contact-api .
+docker tag contact-api asia-northeast1-docker.pkg.dev/{PROJECT_ID}/contact-api/fastapi-app
+docker push asia-northeast1-docker.pkg.dev/{PROJECT_ID}/contact-api/fastapi-app
+gcloud run deploy fastapi-service --image asia-northeast1-docker.pkg.dev/{PROJECT_ID}/contact-api/fastapi-app --region asia-northeast1
+```
+
+### 🔧 環境変数設定
+
+#### **バックエンド (.env)**
+```bash
+# AI関連
+GEMINI_API_KEY=your_gemini_api_key_here
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+
+# データベース
+DATABASE_URL=postgresql://username:password@localhost:5432/contact_api
+POSTGRES_DB=contact_api
+POSTGRES_USER=contact_user
+POSTGRES_PASSWORD=your_secure_password
+
+# セキュリティ
+JWT_SECRET_KEY=your-super-secret-jwt-key
+ADMIN_EMAIL=admin@yourcompany.com
+
+# その他
+ENVIRONMENT=development  # development, staging, production
+```
+
+#### **フロントエンド (.env.local)**
+```bash
+# API接続
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Firebase認証
+NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef
+
+# Firebase Admin SDK
+FIREBASE_ADMIN_SDK_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----..."
+FIREBASE_ADMIN_SDK_CLIENT_EMAIL=firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com
+```
+
+### ✅ 起動確認・ヘルスチェック
+
+```bash
+# バックエンド稼働確認
+curl http://localhost:8000/health
+# → {"status": "healthy", "timestamp": "..."}
+
+# API動作確認
+curl -X POST http://localhost:8000/api/v1/contacts \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "テストユーザー",
+    "email": "test@example.com",
+    "subject": "テスト件名",
+    "message": "システム動作確認のためのテストメッセージです。"
+  }'
+
+# フロントエンド確認
+# ブラウザで http://localhost:3000 にアクセス
+# お問い合わせフォームが表示されることを確認
+```
+
 ### 📋 段階的導入プロセス
 
 #### **Phase 1: パイロット導入（1-2週間）**

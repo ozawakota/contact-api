@@ -1,5 +1,6 @@
 from typing import Optional
-from sqlalchemy import Column, String, Integer, Text, Boolean
+from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime
+from sqlalchemy.orm import relationship
 from db.base import Base  # 既存のベースクラス
 from models.mixins.timestamps import TimestampMixin  # 既存のタイムスタンプ用mixin
 
@@ -25,3 +26,19 @@ class Contact(Base, TimestampMixin):
     is_spam = Column(Boolean, default=False)
     processed_at = Column(DateTime, nullable=True) # 担当者が処理した時間
     status = Column(String(20), default="new")     # new, in_progress, completed
+    
+    # リレーションシップ（ContactAIAnalysisとの1:1関係）
+    ai_analysis = relationship(
+        "ContactAIAnalysis",
+        back_populates="contact",
+        uselist=False,  # 1:1関係
+        cascade="all, delete-orphan"
+    )
+    
+    # リレーションシップ（ContactVectorとの1:1関係）
+    vector = relationship(
+        "ContactVector",
+        back_populates="contact",
+        uselist=False,  # 1:1関係
+        cascade="all, delete-orphan"
+    )
