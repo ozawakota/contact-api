@@ -11,5 +11,5 @@ COPY simple_app.py .
 # 環境変数設定
 ENV PYTHONUNBUFFERED=1
 
-# 動的ポート対応
-CMD ["sh", "-c", "python -m uvicorn simple_app:app --host 0.0.0.0 --port $PORT"]
+# 最小限起動コマンド
+CMD ["python", "-m", "uvicorn", "simple_app:app", "--host", "0.0.0.0", "--port", "8080"]
