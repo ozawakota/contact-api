@@ -23,6 +23,13 @@ def check_environment():
         'GEMINI_API_KEY', 'SENDGRID_API_KEY'
     ]
     
+    # Cloud RunのPORT環境変数チェック
+    port = os.getenv('PORT')
+    if port:
+        print(f"✅ Cloud Run PORT detected: {port}")
+    else:
+        print("⚠️ No PORT environment variable found")
+    
     print("\n=== Environment Variables ===")
     for var in important_vars:
         value = os.getenv(var)

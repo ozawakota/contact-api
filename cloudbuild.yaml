@@ -38,7 +38,7 @@ steps:
       - '--max-instances'
       - '10'
       - '--set-env-vars'
-      - 'ENVIRONMENT=production,PORT=8080'
+      - 'ENVIRONMENT=production'
 
 options:
   logging: CLOUD_LOGGING_ONLY

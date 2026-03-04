@@ -21,9 +21,8 @@ RUN chmod +x start.sh
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# PORT環境変数を動的に使用（Cloud Run対応）
-ENV PORT=8080
-EXPOSE $PORT
+# Cloud RunはPORTを自動設定するため、明示的な設定は不要
+# EXPOSE 8080 もCloud Runでは不要
 
 # 実行コマンド（最適化された起動スクリプト使用）
 CMD ["./start.sh"]

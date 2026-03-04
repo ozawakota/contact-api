@@ -3,8 +3,9 @@
 
 echo "🚀 Starting Contact API for Cloud Run..."
 
-# 環境変数の確認とデフォルト設定
-export PORT=${PORT:-8080}
+# 環境変数の確認（Cloud RunはPORTを自動設定）
+# PORT環境変数はCloud Runが自動的に設定するため、デフォルト値のみ設定
+export PORT=${PORT:-8080}  # フォールバック用（通常は不要）
 export ENVIRONMENT=${ENVIRONMENT:-production}
 export PYTHONPATH=/app
 export PYTHONUNBUFFERED=1
@@ -18,7 +19,7 @@ echo "  PYTHONPATH: $PYTHONPATH"
 echo "🔧 Pre-startup validation..."
 
 # Uvicornサーバー起動（Cloud Run最適化設定）
-echo "🌐 Starting Uvicorn server..."
+echo "🌐 Starting Uvicorn server on port $PORT..."
 exec uvicorn app.main:app \
     --host 0.0.0.0 \
     --port $PORT \
@@ -26,5 +27,5 @@ exec uvicorn app.main:app \
     --timeout-keep-alive 30 \
     --timeout-graceful-shutdown 30 \
     --log-level info \
-    --no-access-log \
+    --access-log \
     --loop uvloop
