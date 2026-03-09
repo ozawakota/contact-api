@@ -1,4 +1,34 @@
-# Cloud Run functions (補助的な処理) でやるべきこと
+# Cloud Run Functions とCloud Buildのデプロイ構成
+
+## Cloud Run Service (メインAPI)
+
+### Cloud Buildによる自動デプロイ設定
+
+プロジェクトのメインのFastAPIアプリケーションは、`cloudbuild.yaml`によってCloud Runサービスとして自動デプロイされます。
+
+#### デプロイフロー
+1. **Dockerイメージビルド**
+   - ベースイメージ: `gcr.io/cloud-builders/docker`
+   - コンテナレジストリ: `asia-northeast1-docker.pkg.dev/$PROJECT_ID/contact-api/fastapi-app`
+   - Dockerfile位置: `backend/db-backup/docker/Dockerfile`
+   - ビルドコンテキスト: `./backend`
+
+2. **イメージプッシュ**
+   - Artifact Registryへのプッシュ
+
+3. **Cloud Runデプロイ**
+   - サービス名: `fastapi-service`
+   - リージョン: `asia-northeast1`
+   - 設定:
+     - メモリ: 1GiB
+     - CPU: 1コア
+     - タイムアウト: 300秒
+     - 同時実行数: 10
+     - 最大インスタンス数: 10
+     - 認証なしアクセス許可
+     - 環境変数: `ENVIRONMENT=production`
+
+### Cloud Run Functions (補助的な処理)
 
 特定のイベントをトリガーにした「切り離せる処理」を担当させます。
 
